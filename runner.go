@@ -18,7 +18,7 @@ func NewRunner() *Runner {
 }
 
 func (r *Runner) Add(spec string, cmd string) error {
-	err := r.cron.AddFunc(spec, r.cmdFunc(cmd))
+	err := r.cron.AddFunc("0 " + spec, r.cmdFunc(cmd))
 
 	log.Printf("Add cron job spec:%v cmd:%v err:%v", spec, cmd, err)
 
