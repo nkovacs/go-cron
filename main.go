@@ -13,6 +13,8 @@ import (
 var (
 	crontabPath string
 	numCPU      int
+	stderr      *log.Logger
+	stdout      *log.Logger
 )
 
 func init() {
@@ -20,18 +22,12 @@ func init() {
 	flag.IntVar(&numCPU, "cpu", runtime.NumCPU(), "maximum number of CPUs")
 }
 
-func main() {
-	flag.Parse()
-
-	runtime.GOMAXPROCS(numCPU)
-
-	stdout := log.New(os.Stdout, "", log.Ldate|log.Ltime)
-	stderr := log.New(os.Stderr, "", log.Ldate|log.Ltime)
-
-	file, err := os.Open(crontabPath)
+func parseFile(filePath string) *Runner {
+	file, err := os.Open(filePath)
 	if err != nil {
-		stderr.Fatalf("crontab path:%v err:%v", crontabPath, err)
+		stderr.Fatalf("crontab path:%v err:%v", filePath, err)
 	}
+	defer file.Close()
 
 	parser, err := NewParser(file)
 	if err != nil {
@@ -45,7 +41,18 @@ func main() {
 		stderr.Fatalf("Parser parse err:%v", err)
 	}
 
-	file.Close()
+	return runner
+}
+
+func main() {
+	flag.Parse()
+
+	runtime.GOMAXPROCS(numCPU)
+
+	stdout = log.New(os.Stdout, "", log.Ldate|log.Ltime)
+	stderr = log.New(os.Stderr, "", log.Ldate|log.Ltime)
+
+	runner := parseFile(crontabPath)
 
 	var wg sync.WaitGroup
 	shutdown(runner, &wg, stdout)
