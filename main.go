@@ -25,39 +25,44 @@ func main() {
 
 	runtime.GOMAXPROCS(numCPU)
 
+	stdout := log.New(os.Stdout, "", log.Ldate|log.Ltime)
+	stderr := log.New(os.Stderr, "", log.Ldate|log.Ltime)
+
 	file, err := os.Open(crontabPath)
 	if err != nil {
-		log.Fatalf("crontab path:%v err:%v", crontabPath, err)
+		stderr.Fatalf("crontab path:%v err:%v", crontabPath, err)
 	}
 
 	parser, err := NewParser(file)
 	if err != nil {
-		log.Fatalf("Parser read err:%v", err)
+		stderr.Fatalf("Parser read err:%v", err)
 	}
+	parser.SetLogger(stdout)
+	parser.SetErrorLogger(stderr)
 
 	runner, err := parser.Parse()
 	if err != nil {
-		log.Fatalf("Parser parse err:%v", err)
+		stderr.Fatalf("Parser parse err:%v", err)
 	}
 
 	file.Close()
 
 	var wg sync.WaitGroup
-	shutdown(runner, &wg)
+	shutdown(runner, &wg, stdout)
 
 	runner.Start()
 	wg.Add(1)
 
 	wg.Wait()
-	log.Println("End cron")
+	stdout.Println("End cron")
 }
 
-func shutdown(runner *Runner, wg *sync.WaitGroup) {
+func shutdown(runner *Runner, wg *sync.WaitGroup, logger *log.Logger) {
 	c := make(chan os.Signal, 2)
 	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
 	go func() {
 		s := <-c
-		log.Println("Got signal: ", s)
+		logger.Println("Got signal: ", s)
 		runner.Stop()
 		wg.Done()
 	}()

@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"errors"
 	"io"
+	"log"
 	"regexp"
 	"strings"
 )
@@ -31,6 +32,14 @@ func NewParser(reader io.Reader) (*Parser, error) {
 	}
 
 	return p, nil
+}
+
+func (p *Parser) SetLogger(logger *log.Logger) {
+	p.runner.SetLogger(logger)
+}
+
+func (p *Parser) SetErrorLogger(errorLogger *log.Logger) {
+	p.runner.SetErrorLogger(errorLogger)
 }
 
 func (p *Parser) Parse() (*Runner, error) {
