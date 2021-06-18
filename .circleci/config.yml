@@ -25,11 +25,17 @@ jobs:
       - run:
           name: Build
           command: gox -osarch '!darwin/386' -output "dist/go-cron-{{.OS}}-{{.Arch}}"
+      - persist_to_workspace:
+          root: dist
+          paths: '*'
   release:
     working_directory: ~/repo
     docker:
       - image: circleci/golang:1.16.4
     steps:
+      - checkout
+      - attach_workspace:
+          at: dist
       - run:
           name: Release
           command: ghr -t $GITHUB_TOKEN -u $CIRCLE_PROJECT_USERNAME -r $CIRCLE_PROJECT_REPONAME --replace `git describe --tags` dist/
@@ -38,6 +44,9 @@ jobs:
     docker:
       - image: circleci/golang:1.16.4
     steps:
+      - checkout
+      - attach_workspace:
+          at: dist
       - run:
           name: Release
           command: ghr -t $GITHUB_TOKEN -u $CIRCLE_PROJECT_USERNAME -r $CIRCLE_PROJECT_REPONAME --draft --replace `git describe --tags` dist/
