@@ -37,6 +37,9 @@ jobs:
       - attach_workspace:
           at: dist
       - run:
+          name: Install ghr
+          command: go get github.com/tcnksm/ghr
+      - run:
           name: Release
           command: ghr -t $GITHUB_TOKEN -u $CIRCLE_PROJECT_USERNAME -r $CIRCLE_PROJECT_REPONAME --replace `git describe --tags` dist/
   prerelase:
@@ -47,6 +50,9 @@ jobs:
       - checkout
       - attach_workspace:
           at: dist
+      - run:
+          name: Install ghr
+          command: go get github.com/tcnksm/ghr
       - run:
           name: Release
           command: ghr -t $GITHUB_TOKEN -u $CIRCLE_PROJECT_USERNAME -r $CIRCLE_PROJECT_REPONAME --draft --replace `git describe --tags` dist/
