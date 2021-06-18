@@ -59,17 +59,9 @@ jobs:
 
 workflows:
   version: 2
-  main:
+  prerelase:
     jobs:
       - build
-      - release:
-          requires:
-            - build
-          filters:
-            branches:
-              ignore: /.*/
-            tags:
-              only: /[0-9]+(\.[0-9]+)*/
       - prerelase:
           requires:
             - build
@@ -80,3 +72,14 @@ workflows:
                 - ci-update
             tags:
               ignore: /.*/
+  release:
+    jobs:
+      - build
+      - release:
+          requires:
+            - build
+          filters:
+            branches:
+              ignore: /.*/
+            tags:
+              only: /[0-9]+(\.[0-9]+)*/
