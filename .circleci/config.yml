@@ -24,7 +24,7 @@ jobs:
           command: go test -v
       - run:
           name: Build
-          command: gox -output "dist/go-cron-{{.OS}}-{{.Arch}}"
+          command: gox -osarch '!darwin/386' -output "dist/go-cron-{{.OS}}-{{.Arch}}"
   release:
     working_directory: ~/repo
     docker:
