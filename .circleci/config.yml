@@ -1,0 +1,67 @@
+version: 2.1
+jobs:
+  build:
+    working_directory: ~/repo
+    docker:
+      - image: circleci/golang:1.16.4
+    steps:
+      - checkout
+      - restore_cache:
+          keys:
+            - go-mod-v4-{{ checksum "go.sum" }}
+      - run:
+          name: Install Dependencies
+          command: go get ./...
+      - run:
+          name: Install gox
+          command: go get github.com/mitchellh/gox
+      - save_cache:
+          key: go-mod-v4-{{ checksum "go.sum" }}
+          paths:
+            - "/go/pkg/mod"
+      - run:
+          name: Run tests
+          command: go test -v
+      - run:
+          name: Build
+          command: gox -output "dist/go-cron-{{.OS}}-{{.Arch}}"
+  release:
+    working_directory: ~/repo
+    docker:
+      - image: circleci/golang:1.16.4
+    steps:
+      - run:
+          name: Release
+          command: ghr -t $GITHUB_TOKEN -u $CIRCLE_PROJECT_USERNAME -r $CIRCLE_PROJECT_REPONAME --replace `git describe --tags` dist/
+  prerelase:
+    working_directory: ~/repo
+    docker:
+      - image: circleci/golang:1.16.4
+    steps:
+      - run:
+          name: Release
+          command: ghr -t $GITHUB_TOKEN -u $CIRCLE_PROJECT_USERNAME -r $CIRCLE_PROJECT_REPONAME --draft --replace `git describe --tags` dist/
+
+workflows:
+  version: 2
+  main:
+    jobs:
+      - build
+      - release:
+          requires:
+            - build
+          filters:
+            branches:
+              ignore: /.*/
+            tags:
+              only: /[0-9]+(\.[0-9]+)*/
+      - prerelase:
+          requires:
+            - build
+          filters:
+            branches:
+              only:
+                - master
+                - ci-update
+            tags:
+              ignore: /.*/
